@@ -1,5 +1,7 @@
-
-
+/* February 2024
+* Storing the copy of code, only for quick lookup of code file which woeks on my PCB design
+* Credits to:  Robin Emley , for original code, Thank you
+*/
 #include <Arduino.h> 
 #include <Wire.h>
 #include <SoftwareSerial.h>
