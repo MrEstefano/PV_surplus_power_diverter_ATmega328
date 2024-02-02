@@ -1,6 +1,7 @@
 /* Mk2_bothDisplays_4.ino
  * February 2024
  * Storing the copy of code, only for quick lookup of code file which woeks on my PCB design
+ * Credits to:  Robin Emley
  *
  *  (initially released as Mk2_bothDisplays_1 in March 2014)
  * This sketch is for diverting surplus PV power to a dump load using a triac or  
