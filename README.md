@@ -6,6 +6,8 @@ For those who have digital power meter follow Robin's tutorial
 Code uploaded to ATmega328 merges transmit data into one string with start and begining mark, this string is sent to ESP8266 via Software serial in period of 9 seconds,
 Code which is flashed on ESp8266 deconstruct data and manipulates them for updating Firebase real time database in 18 seconds interwal.
 Web application hosted by Firebase is collecting data freom database and displays them in tabs, gauges, graphs and table, see the format below.
+![image](https://github.com/MrEstefano/PV_surplus_power_diverter_ATmega328/assets/79326044/ba9d38ee-1ae7-4c44-847b-f726c1f949c0)
+![image](https://github.com/MrEstefano/PV_surplus_power_diverter_ATmega328/assets/79326044/cade0df9-35ce-4c31-86d9-bf71bfe2d40c)
 
 ![image](https://github.com/MrEstefano/PV_surplus_power_diverter_ATmega328/assets/79326044/3a05e52f-3fef-41e3-90b5-53a37b65971f)
 
