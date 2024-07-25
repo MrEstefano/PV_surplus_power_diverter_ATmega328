@@ -109,7 +109,7 @@
 #define ESP8266_PRESENT // <- this line should be commented out if the RFM12B module is not present
 
 #ifdef ESP8266_PRESENT
-  #define RX 8
+  #define RX 3
   #define TX 2
   #include <SoftwareSerial.h>
   //declaring software objects in class
@@ -141,8 +141,8 @@
 #define ANTI_CREEP_LIMIT 5 // in Joules per mains cycle (has no effect when set to 0)
 long antiCreepLimit_inIEUperMainsCycle;
 
-
-
+const byte fanRelay = 8;
+const float heatSinkoptimalTemp = 40.00;
 const byte noOfDumploads = 1; 
 
 // definition of enumerated types
@@ -156,10 +156,7 @@ enum loadStates physicalLoadState[noOfDumploads];
 
 /* --------------------------------------*/
 
-#ifdef ESP8266_PRESENT 
-  unsigned long sendDataPrevMillis = 0;
-  unsigned long timerDelay = 9000;
-#endif
+
 
 typedef struct { 
   int powerAtSupplyPoint_Watts; // import = +ve, to match OEM convention
@@ -299,7 +296,7 @@ const float powerCal_diverted = 0.0253;  // for CT2  29th mar 2024
 const float voltageCal = 1.0; 
 #define DISPLAY_SHUTDOWN_IN_HOURS 8 // auto-reset after this period of inactivity
 
-
+#define DEVICE_ON 13 //LED indicator that device is ON
 
 boolean EDD_isActive = false; // energy divertion detection
 long requiredExportPerMainsCycle_inIEU;
@@ -309,7 +306,8 @@ void setup()
 {  
 //  pinMode(outOfRangeIndication, OUTPUT);  
 //  digitalWrite (outOfRangeIndication, LED_OFF); 
-
+  pinMode (fanRelay,OUTPUT);
+  digitalWrite (fanRelay,LOW);
   pinMode(physicalLoad_0_pin, OUTPUT); // driver pin for the primary load
 //  pinMode(physicalLoad_1_pin, OUTPUT); // driver pin for an additional load
   //
@@ -337,7 +335,8 @@ void setup()
   sensors.begin();
 
   
-
+  pinMode(DEVICE_ON, OUTPUT); 
+  digitalWrite(DEVICE_ON, HIGH); 
   
        
   // When using integer maths, calibration values that have supplied in floating point 
@@ -662,6 +661,8 @@ void allGeneralProcessing()
             #ifdef ESP8266_PRESENT
               send_esp8266_data();         
             #endif  
+            coolDownForHeatSink(); 
+
             Serial.print("grid power: ");  Serial.println(tx_data.powerAtSupplyPoint_Watts);   
             Serial.print("diverted energy (Wh): ");  Serial.println(tx_data.divertedEnergyTotal_Wh);
             Serial.print("diverted power: ");  Serial.println(tx_data.divertedPower_Watts);
@@ -1037,7 +1038,14 @@ void configureValueForDisplay()
  
 }
 
-
+void coolDownForHeatSink(){
+  if((float)tx_data.temperature_DS18B20  >= heatSinkoptimalTemp){
+    digitalWrite(fanRelay, HIGH);
+  }
+  else{
+    digitalWrite(fanRelay, LOW);
+  }
+}  
 
 float readTemperature(){
   sensors.requestTemperatures(); 
