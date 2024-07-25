@@ -99,10 +99,12 @@
  *      www.Mk2PVrouter.co.uk
  */
 
-#include <Arduino.h> 
+
 #include <Arduino.h> 
 #include <Wire.h>
 #include <TimerOne.h>
+#include <OneWire.h>
+#include <DallasTemperature.h>
 
 #define ESP8266_PRESENT // <- this line should be commented out if the RFM12B module is not present
 
@@ -113,6 +115,14 @@
   //declaring software objects in class
   SoftwareSerial esp(RX,TX);  //8=rx   2=tx     
 #endif
+// Dallas DS18B20 commands
+#define SKIP_ROM 0xcc 
+#define CONVERT_TEMPERATURE 0x44
+#define READ_SCRATCHPAD 0xbe
+#define BAD_TEMPERATURE 30000 // this value (300C) is sent if no sensor is present
+
+//DS18B20  Temp sens
+#define ONE_WIRE_BUS 7
 
 #define ADC_TIMER_PERIOD 125 // uS (determines the sampling rate / amount of idle time)
 
@@ -131,7 +141,9 @@
 #define ANTI_CREEP_LIMIT 5 // in Joules per mains cycle (has no effect when set to 0)
 long antiCreepLimit_inIEUperMainsCycle;
 
-const byte noOfDumploads = 2; 
+
+
+const byte noOfDumploads = 1; 
 
 // definition of enumerated types
 enum polarities {NEGATIVE, POSITIVE};
@@ -154,21 +166,31 @@ typedef struct {
   int divertedEnergyTotal_Wh; // always positive
   int divertedPower_Watts; // always positive
   int Vrms_times100;
-  int temperature_times100; 
+  float temperature_DS18B20; 
 } Tx_struct; 
 Tx_struct tx_data; 
 
 // allocation of digital IO pins 
 // *****************************
+//const byte tempSensorPin = 3; // <-- the "mode" port 
 // const byte outOfRangeIndication = 3; // <-- this output port is active-high 
-const byte physicalLoad_1_pin = 3;  // <-- the "mode" port is active-high 
+//const byte physicalLoad_1_pin = 3;  // <-- the "mode" port is active-high 
 const byte physicalLoad_0_pin = 4;  // <-- the "trigger" port is active-low 
+
+// For temperature sensing
+// Setup a oneWire instance to communicate with any OneWire devices
+OneWire oneWire(ONE_WIRE_BUS);
+// Pass our oneWire reference to Dallas Temperature sensor 
+DallasTemperature sensors(&oneWire);
+//read temp
+float readTemperature(void);
+
 
 // allocation of analogue IO pins 
 // ******************************
-const byte voltageSensor = 3;          // A3 is for the voltage sensor
-const byte currentSensor_diverted = 4; // A4 is for CT2 which measures diverted current
-const byte currentSensor_grid = 5;     // A5 is for CT1 which measures grid current
+const byte voltageSensor = 5;          // A3 is for the voltage sensor
+const byte currentSensor_diverted = 3; // A4 is for CT2 which measures diverted current
+const byte currentSensor_grid = 4;     // A5 is for CT1 which measures grid current
 
 const byte delayBeforeSerialStarts = 1;  // in seconds, to allow Serial window to be opened
 const byte startUpPeriod = 3;  // in seconds, to allow LP filter to settle
@@ -260,8 +282,9 @@ int lowestNoOfSampleSetsPerMainsCycle;
 //const float powerCal_grid = 0.062;  
 //const float powerCal_diverted = 0.062;  
 
-const float powerCal_grid = 0.081;  // for CT1   10rd Feb 2024  
-const float powerCal_diverted = 0.077;  // for CT2  10rd Feb 202 
+
+const float powerCal_grid =  0.0259;  // for CT1   29th Mar 2024
+const float powerCal_diverted = 0.0253;  // for CT2  29th mar 2024
 
 //const float powerCal_grid = 0.0416;  // for CT1   3rd Feb 2024
 //const float powerCal_diverted = 0.0386;  // for CT2  3rd Feb 2024
@@ -274,7 +297,7 @@ const float powerCal_diverted = 0.077;  // for CT2  10rd Feb 202
 // so the optimal value for this cal factor will be close to unity.  
 //
 const float voltageCal = 1.0; 
-
+#define DISPLAY_SHUTDOWN_IN_HOURS 8 // auto-reset after this period of inactivity
 
 
 
@@ -288,7 +311,7 @@ void setup()
 //  digitalWrite (outOfRangeIndication, LED_OFF); 
 
   pinMode(physicalLoad_0_pin, OUTPUT); // driver pin for the primary load
-  pinMode(physicalLoad_1_pin, OUTPUT); // driver pin for an additional load
+//  pinMode(physicalLoad_1_pin, OUTPUT); // driver pin for an additional load
   //
   for(int i = 0; i< noOfDumploads; i++) // re-using the logic from my multiLoad code
   {
@@ -297,10 +320,10 @@ void setup()
   } 
   //
   digitalWrite(physicalLoad_0_pin, physicalLoadState[0]); // the primary load is active low.      
-  digitalWrite(physicalLoad_1_pin, !physicalLoadState[1]); // the additional load is active high.      
+  //digitalWrite(physicalLoad_1_pin, !physicalLoadState[1]); // the additional load is active high.      
 
   delay(delayBeforeSerialStarts * 1000); // allow time to open Serial monitor      
-      esp.begin(9600);
+  esp.begin(9600);
   //declare pin functions
   pinMode (RX,INPUT);
   pinMode (TX,OUTPUT);
@@ -310,7 +333,8 @@ void setup()
   Serial.println("Sketch ID:      Mk2_fasterControl_RFdatalog_1.ino");
   Serial.println();
        
-  
+  //start temp sensor
+  sensors.begin();
 
   
 
@@ -354,7 +378,7 @@ void setup()
 
   long mainsCyclesPerHour = (long)CYCLES_PER_SECOND * 
                              SECONDS_PER_MINUTE * MINUTES_PER_HOUR;
-                             
+  displayShutdown_inMainsCycles = DISPLAY_SHUTDOWN_IN_HOURS * mainsCyclesPerHour;                         
                      
       
   requiredExportPerMainsCycle_inIEU = (long)REQUIRED_EXPORT_IN_WATTS * (1/powerCal_grid); 
@@ -396,6 +420,8 @@ void setup()
   Serial.println(capacityOfEnergyBucket_long);
   Serial.print("  nominalEnergyThreshold   = ");
   Serial.println(nominalEnergyThreshold);
+
+  
   
   Serial.print(">>free RAM = ");
   Serial.println(freeRam());  // a useful value to keep an eye on
@@ -632,15 +658,15 @@ void allGeneralProcessing()
             tx_data.Vrms_times100 = 
               (int)(100 * voltageCal * sqrt(sum_Vsquared / samplesDuringDatalogPeriod) * 4);           
             tx_data.divertedEnergyTotal_Wh = divertedEnergyTotal_Wh;     
+            tx_data.temperature_DS18B20 = readTemperature();
             #ifdef ESP8266_PRESENT
               send_esp8266_data();         
             #endif  
-//              
-//           Serial.println(tx_data.powerAtSupplyPoint_Watts); 
-//            Serial.print(",  "); 
-//            Serial.println(tx_data.divertedPower_Watts); 
-//            Serial.print(",  "); 
-            Serial.println(tx_data.Vrms_times100); 
+            Serial.print("grid power: ");  Serial.println(tx_data.powerAtSupplyPoint_Watts);   
+            Serial.print("diverted energy (Wh): ");  Serial.println(tx_data.divertedEnergyTotal_Wh);
+            Serial.print("diverted power: ");  Serial.println(tx_data.divertedPower_Watts);
+            Serial.print("Vrms: ");  Serial.println((float)tx_data.Vrms_times100 / 100);  // Serial.println(tx_data.Vrms_times100); 
+            Serial.print("temperature: ");  Serial.println(tx_data.temperature_DS18B20);
 //
             sumP_atSupplyPoint = 0;
             sumP_forDivertedPower = 0;
@@ -846,7 +872,7 @@ void allGeneralProcessing()
                
         // update each of the physical loads
         digitalWrite(physicalLoad_0_pin, physicalLoadState[0]); // active low for trigger     
-        digitalWrite(physicalLoad_1_pin, !physicalLoadState[1]); // active high for additional load     
+        //digitalWrite(physicalLoad_1_pin, !physicalLoadState[1]); // active high for additional load     
         
         // update the Energy Diversion Detector
         if (physicalLoadState[0] == LOAD_ON) {
@@ -1013,6 +1039,13 @@ void configureValueForDisplay()
 
 
 
+float readTemperature(){
+  sensors.requestTemperatures(); 
+  float result;
+  result = sensors.getTempCByIndex(0);  
+  return result;
+}
+
 #ifdef ESP8266_PRESENT
 void send_esp8266_data(){
 
@@ -1027,9 +1060,9 @@ void send_esp8266_data(){
     esp.print(tx_data.divertedEnergyTotal_Wh);
     esp.print(", ");
     esp.print(tx_data.divertedPower_Watts);
-    /*((float)tx_data.temperature_times100 / 100)*/
+    /*(tx_data.temperature_DS18B20)*/
     esp.print(">");  
-    Serial.print("data sent to ESP8266");
+    Serial.println("data sent to ESP8266");
   //}
 }
 #endif  
