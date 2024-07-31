@@ -1,5 +1,5 @@
 // Monitoring web app for solar energy diverter
-// 8th Feb 2024
+// 31 July 2024
 // 
 //
 //
@@ -27,7 +27,7 @@
     // TODO: Add SDKs for Firebase products that you want to use
     // https://firebase.google.com/docs/web/setup#available-libraries
 
-    const firebaseConfig = {
+      const firebaseConfig = {
       apiKey: "----",
       authDomain: "-----------------",
       databaseURL: "----------------------",
@@ -36,6 +36,7 @@
       messagingSenderId: "--------------",
       appId: "-----------------------"
     };
+
 
     // Initialize firebase
      firebase.initializeApp(firebaseConfig);
@@ -97,7 +98,7 @@
       <p><span class ="date-time">Last update: <span id="lastUpdate"></span></span></p>
       <p>
         Cards: <input type="checkbox" id="cards-checkbox" name="cards-checkbox" checked>
-        Gauges: <input type="checkbox" id="gauges-checkbox" name="gauges-checkbox" checked>
+        
         Charts: <input type="checkbox" id="charts-checkbox" name="charts-checkbox" unchecked>
       </p>
       <div id="cards-div">
@@ -110,65 +111,20 @@
           <!--DIVERTED-->
           <div class="card">
             <p><i class="fas fa-tint" style="color:#00add6;"></i> TOTAL DIVERTED </p>
-            <p><span class="reading"><span id="diverted"></span> W</span></p>
+            <p><span class="reading"><span id="diverted"></span> W/h</span></p>
           </div>   
           <!--TEMPERATURE-->
           <div class="card">
-            <p><i class="fas fa-thermometer-half" style="color:#059e8a;"></i> TEMPERATURE</p>
-            <p><span class="reading"><span id="temp"></span> &deg;C</span></p>
+            <p><i class="fas fa-thermometer-half" style="color:#059e8a;"></i> POWER AT LOAD</p>
+            <p><span class="reading"><span id="load"></span> W</span></p>
           </div>
                  
         </div>
       </div>
-      <!--GAUGES-->
-      <div id ="gauges-div">
-        <div class="cards">
-          <!--TEMPERATURE-->
-          <div class="card">
-            <canvas id="gauge-temperature"></canvas>
-          </div>
-          <!--DIVERTED-->
-          <div class="card">
-            <canvas id="gauge-diverted"></canvas>
-          </div>
-        </div>
-      </div>
+      
 
       
-      <div id="cards-div">
-        <div class="cards">
-        
-          <!--CARD FOR GPIO 12-->
-          <div class="card">
-            <p class="card-title"><i class="fas fa-lightbulb"></i> GPIO 12</p>
-            <p>
-              <button class="button-on" id="btn1On">ON</button>
-              <button class="button-off" id="btn1Off">OFF</button>
-            </p>
-            <p class="state">State:<span id="state1"></span></p>
-          </div>
-
-          <!--CARD FOR GPIO 13-->
-          <div class="card">
-            <p class="card-title"><i class="fas fa-lightbulb"></i> GPIO 13</p>
-            <p>
-              <button class="button-on" id="btn2On">ON</button>
-              <button class="button-off" id="btn2Off">OFF</button>
-            </p>
-            <p class="state">State:<span id="state2"></span></p>
-          </div>
-
-          <!--CARD FOR CHARGRE-->
-          <div class="card">
-            <p class="card-title"><i class="fas fa-lightbulb"></i> CHARGE</p>
-            <p>
-              <button class="button-on" id="btn3On">ON</button>
-              <button class="button-off" id="btn3Off">OFF</button>
-            </p>
-            <p class="state">State:<span id="state3"></span></p>
-          </div>
-        </div>
-      </div>
+      
 
       <!--CHARTS-->
       <div id="charts-div" style="display:none">
@@ -179,22 +135,22 @@
         <!--POWER AT SUPPLY CHART-->
         <div class="cards">
           <div class="card">
-            <p><i class="fas fa-thermometer-half" style="color:#059e8a;"></i> POWER AT SUPPLY CHART</p>
+            <p><i class="fas fa-thermometer-half" style="color:#059e8a;"></i> POWER AT SUPPLY</p>
             <div id="chart-power-supply" class="chart-container"></div>
           </div>
         </div>
         <!--TOTAL DIVERTED ENERGY CHARTT-->
         <div class="cards">
           <div class="card">
-            <p><i class="fas fa-tint" style="color:#00add6;"></i> TOTAL DIVERTED ENERGY CHART</p>
+            <p><i class="fas fa-tint" style="color:#00add6;"></i> TOTAL DIVERTED ENERGY </p>
             <div id="chart-diverted-energy" class="chart-container"></div>
           </div>
         </div>
         <!--TEMPERATURE CHART-->
         <div class="cards">
           <div class="card">
-            <p><i class="fas fa-angle-double-down" style="color:#e1e437;"></i> TEMPERATURE CHART</p>
-            <div id="chart-temperature" class="chart-container"></div>
+            <p><i class="fas fa-angle-double-down" style="color:#e1e437;"></i> POWER AT LOAD </p>
+            <div id="chart-powerAtLoad" class="chart-container"></div>
           </div>
         </div>
       </div>
@@ -229,9 +185,9 @@
         <table id="readings-table">
             <tr id="theader">
               <th>Timestamp</th>
-              <th>Temp (ºC)</th>
-              <th>Diverted (W)</th>
               <th>Power (W)</th>
+              <th>Diverted (W/h)</th>
+              <th>Load (W)</th>
             </tr>
             <tbody id="tbody">
             </tbody>
@@ -244,10 +200,12 @@
   
   <!--INCLUDE JS FILES-->
   <script src="scripts/auth.js"></script>
-  <script src="scripts/charts-definition.js"></script>
-  <script src="scripts/gauges-definition.js"></script>
+  <script src="scripts/charts-definition.js"></script>  
   <script src="scripts/index.js"></script>
    
   </body>
 
 </html>
+
+  
+  
