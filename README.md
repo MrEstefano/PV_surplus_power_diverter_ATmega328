@@ -9,5 +9,5 @@ Web application hosted by Firebase is collecting data freom database and display
 ![image](https://github.com/MrEstefano/PV_surplus_power_diverter_ATmega328/assets/79326044/c62f30c2-f8bb-4ed0-a265-b2cdd118d011)
 ![image](https://github.com/MrEstefano/PV_surplus_power_diverter_ATmega328/assets/79326044/ba9d38ee-1ae7-4c44-847b-f726c1f949c0)
 ![image](https://github.com/MrEstefano/PV_surplus_power_diverter_ATmega328/assets/79326044/cade0df9-35ce-4c31-86d9-bf71bfe2d40c)
-![image](https://github.com/MrEstefano/PV_surplus_power_diverter_ATmega328/assets/79326044/3a05e52f-3fef-41e3-90b5-53a37b65971f)
+![diverter](https://github.com/user-attachments/assets/d5266805-36e3-484a-acde-77d8a0ae5a7d)
 
