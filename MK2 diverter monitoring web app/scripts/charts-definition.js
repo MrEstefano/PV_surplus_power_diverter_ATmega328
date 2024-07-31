@@ -1,26 +1,25 @@
 // Credits to: Sara Santos
 
 // Create the charts when the web page loads
+
 window.addEventListener('load', onload);
 
 function onload(event){
   chartP = createPowerChart();
-  //chartV = createVoltageChart();
   chartD = createDivertedChart();  
-  //chartH = createHumidityChart();
-  chartT = createTemperatureChart();
+  chartL = createLoadChart();
 }
 
-// Create Temperature Chart
-function createTemperatureChart() {
+// Create power_at_load Chart
+function createLoadChart() {
   var chart = new Highcharts.Chart({
     chart:{ 
-      renderTo:'chart-temperature',
+      renderTo:'chart-powerAtLoad',
       type: 'spline' 
     },
     series: [
       {
-        name: 'DEVICE TEMP'
+        name: 'POWER AT LOAD'
       }
     ],
     title: { 
@@ -40,7 +39,7 @@ function createTemperatureChart() {
     },
     yAxis: {
       title: { 
-        text: 'Degree Celsius' 
+        text: 'W' 
       }
     },
     credits: { 
@@ -80,7 +79,7 @@ function createDivertedChart(){
     },
     yAxis: {
       title: { 
-        text: 'Watts' 
+        text: 'W/h' 
       }
     },
     credits: { 
@@ -120,7 +119,7 @@ function createPowerChart() {
     },
     yAxis: {
       title: { 
-        text: 'Watts' 
+        text: 'W' 
       }
     },
     credits: { 
