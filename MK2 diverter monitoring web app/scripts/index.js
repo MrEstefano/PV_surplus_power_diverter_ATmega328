@@ -43,40 +43,15 @@ function epochToJsDate(epochTime){
   const chartsRangeInputElement = document.getElementById('charts-range');
   const loadDataButtonElement = document.getElementById('load-data');
   const cardsCheckboxElement = document.querySelector('input[name=cards-checkbox]');
-  const gaugesCheckboxElement = document.querySelector('input[name=gauges-checkbox]');
   const chartsCheckboxElement = document.querySelector('input[name=charts-checkbox]');
   
   // DOM elements for sensor readings
   const cardsReadingsElement = document.querySelector("#cards-div");
-  const gaugesReadingsElement = document.querySelector("#gauges-div");
   const chartsDivElement = document.querySelector('#charts-div');
-  const tempElement = document.getElementById("temp");
+  const loadElement = document.getElementById("load");
   const powerElement = document.getElementById("power");
   const divertElement = document.getElementById("diverted");
   const updateElement = document.getElementById("lastUpdate")
-  
-  // Elements for GPIO states
-const stateElement1 = document.getElementById("state1");
-const stateElement2 = document.getElementById("state2");
-const stateElement3 = document.getElementById("state3");
-
-// Button Elements
-const btn1On = document.getElementById('btn1On');
-const btn1Off = document.getElementById('btn1Off');
-const btn2On = document.getElementById('btn2On');
-const btn2Off = document.getElementById('btn2Off');
-const btn3On = document.getElementById('btn3On');
-const btn3Off = document.getElementById('btn3Off');
-
-// Database path for GPIO states
-var dbPathOutput1 = 'board1/outputs/digital/12';
-var dbPathOutput2 = 'board1/outputs/digital/13';
-var dbPathOutput3 = 'board1/outputs/digital/14';
-
-// Database references
-var dbRefOutput1 = firebase.database().ref().child(dbPathOutput1);
-var dbRefOutput2 = firebase.database().ref().child(dbPathOutput2);
-var dbRefOutput3 = firebase.database().ref().child(dbPathOutput3);
 
   // MANAGE LOGIN/LOGOUT UI
   const setupUI = (user) => {
@@ -88,55 +63,7 @@ var dbRefOutput3 = firebase.database().ref().child(dbPathOutput3);
       userDetailsElement.style.display ='block';
       userDetailsElement.innerHTML = user.email;
 
-      //Update states depending on the database value
-      dbRefOutput1.on('value', snap => {
-          if(snap.val()==1) {
-              stateElement1.innerText="ON";
-          }
-          else{
-              stateElement1.innerText="OFF";
-          }
-      });
-      dbRefOutput2.on('value', snap => {
-          if(snap.val()==1) {
-              stateElement2.innerText="ON";
-          }
-          else{
-              stateElement2.innerText="OFF";
-          }
-      });
-      dbRefOutput3.on('value', snap => {
-          if(snap.val()==1) {
-              stateElement3.innerText="ON";
-          }
-          else{
-              stateElement3.innerText="OFF";
-          }
-      });
-
-      // Update database uppon button click
-      btn1On.onclick = () =>{
-          dbRefOutput1.set(1);
-      }
-      btn1Off.onclick = () =>{
-          dbRefOutput1.set(0);
-      }
-
-      btn2On.onclick = () =>{
-          dbRefOutput2.set(1);
-      }
-      btn2Off.onclick = () =>{
-          dbRefOutput2.set(0);
-      }
-
-      btn3On.onclick = () =>{
-          dbRefOutput3.set(1);
-      }
-      btn3Off.onclick = () =>{
-          dbRefOutput3.set(0);
-      }
-
-  
+     
       // get user UID to get data from database
       var uid = user.uid;
       console.log(uid);
@@ -159,11 +86,11 @@ var dbRefOutput3 = firebase.database().ref().child(dbPathOutput3);
       // Delete all data from charts to update with new values when a new range is selected
       chartP.destroy();
       chartD.destroy();
-      chartT.destroy();
+      chartL.destroy();
       // Render new charts to display new range of data
       chartP = createPowerChart();
       chartD = createDivertedChart();
-      chartT = createTemperatureChart();
+      chartL = createLoadChart();
       // Update the charts with the new range
       // Get the latest readings and plot them on charts (the number of plotted readings corresponds to the chartRange value)
       dbRef.orderByKey().limitToLast(chartRange).on('child_added', snapshot =>{
@@ -171,12 +98,12 @@ var dbRefOutput3 = firebase.database().ref().child(dbPathOutput3);
         // Save values on variables
         var power = jsonData.power;          
         var diverted = jsonData.diverted;
-        var temperature = jsonData.temperature;
+        var load = jsonData.temperature;
         var timestamp = jsonData.timestamp;
         // Plot the values on the charts
         plotValues(chartP, timestamp, power);          
         plotValues(chartD, timestamp, diverted);
-        plotValues(chartT, timestamp, temperature);
+        plotValues(chartL, timestamp, load);
       });
     });
 
@@ -197,15 +124,7 @@ var dbRefOutput3 = firebase.database().ref().child(dbPathOutput3);
           cardsReadingsElement.style.display = 'none';
         }
       });
-      // Checbox (gauges for sensor readings)
-      gaugesCheckboxElement.addEventListener('change', (e) =>{
-        if (gaugesCheckboxElement.checked) {
-          gaugesReadingsElement.style.display = 'block';
-        }
-        else{
-          gaugesReadingsElement.style.display = 'none';
-        }
-      });
+    
       // Checbox (charta for sensor readings)
       chartsCheckboxElement.addEventListener('change', (e) =>{
         if (chartsCheckboxElement.checked) {
@@ -222,33 +141,16 @@ var dbRefOutput3 = firebase.database().ref().child(dbPathOutput3);
         var jsonData = snapshot.toJSON(); // example: {temperature: 25.02, humidity: 50.20, voltage: 1008.48, timestamp:1641317355}
         var power = jsonData.power;        
         var diverted = jsonData.diverted;
-        var temperature = jsonData.temperature;
+        var load = jsonData.temperature;
         var timestamp = jsonData.timestamp;
         // Update DOM elements
         powerElement.innerHTML = power;        
         divertElement.innerHTML = diverted;
-        tempElement.innerHTML = temperature;
+        loadElement.innerHTML = load;
         updateElement.innerHTML = epochToDateTime(timestamp);
       });
   
-      // GAUGES
-      // Get the latest readings and display on gauges
-      dbRef.orderByKey().limitToLast(1).on('child_added', snapshot =>{
-        var jsonData = snapshot.toJSON(); // example: {temperature: 25.02, humidity: 50.20, voltage: 1008.48, timestamp:1641317355}
-        var power = jsonData.power;        
-        var diverted = jsonData.diverted;
-        var temperature = jsonData.temperature;
-        var timestamp = jsonData.timestamp;
-        // Update DOM elements
-        var gaugeT = createTemperatureGauge();
-        var gaugeD = createDivertedGauge();
-        gaugeT.draw();
-        gaugeD.draw();
-        gaugeT.value = temperature;
-        gaugeD.value = diverted;
-        updateElement.innerHTML = epochToDateTime(timestamp);
-      });
-  
+      
       // DELETE DATA
       // Add event listener to open modal when click on "Delete Data" button
       deleteButtonElement.addEventListener('click', e =>{
@@ -275,14 +177,14 @@ var dbRefOutput3 = firebase.database().ref().child(dbPathOutput3);
             console.log(jsonData);
             var power = jsonData.power;
             var diverted = jsonData.diverted;            
-            var temperature = jsonData.temperature;
+            var load = jsonData.temperature;
             var timestamp = jsonData.timestamp;
             var content = '';
             content += '<tr>';
             content += '<td>' + epochToDateTime(timestamp) + '</td>';
             content += '<td>' + power + '</td>';
             content += '<td>' + diverted + '</td>';            
-            content += '<td>' + temperature + '</td>';
+            content += '<td>' + load + '</td>';
             content += '</tr>';
             $('#tbody').prepend(content);
             // Save lastReadingTimestamp --> corresponds to the first timestamp on the returned snapshot data
@@ -320,14 +222,14 @@ var dbRefOutput3 = firebase.database().ref().child(dbPathOutput3);
                 
                 var power = element.power;
                 var diverted = element.diverted;
-                var temperature = element.temperature;
+                var load = element.load;
                 var timestamp = element.timestamp;
                 var content = '';
                 content += '<tr>';
                 content += '<td>' + epochToDateTime(timestamp) + '</td>';
                 content += '<td>' + power + '</td>';
                 content += '<td>' + diverted + '</td>';                
-                content += '<td>' + temperature + '</td>';
+                content += '<td>' + load + '</td>';
                 content += '</tr>';
                 $('#tbody').append(content);
               }
