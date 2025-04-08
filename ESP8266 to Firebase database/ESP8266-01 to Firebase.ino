@@ -1,3 +1,42 @@
+/***********************************************************************************/
+/*    program name: ESP8266 datalogging to Firebase Real time database 
+/*    programer name:  Stefan Zakutansky
+/*    date:            8th February 2024
+/*    program function: Receive data from ATmega328 with start anfd and
+/*                      end-markers combined. Once separated, wrap all together and 
+/*                      and send it to data base 
+/*    Credits to: Rui Santos, Robin2, JANAK13
+/*
+/************************************************************************************/
+
+#include <Wire.h>
+#include <Arduino.h>
+#include <WiFiUdp.h>
+#include <NTPClient.h>
+#include <ESP8266WiFi.h>
+#include <SoftwareSerial.h>
+#include <Adafruit_Sensor.h>
+#include <Adafruit_BME280.h>
+#include <Firebase_ESP_Client.h>
+
+// Provide the token generation process info.
+#include "addons/TokenHelper.h"
+// Provide the RTDB payload printing info and other helper functions.
+#include "addons/RTDBHelper.h"
+
+// Insert your network credentials
+#define WIFI_SSID "---------------"
+#define WIFI_PASSWORD "-----------------"
+
+// Insert Firebase project API Key
+#define API_KEY "-"
+
+// Insert Authorized Email and Corresponding Password
+#define USER_EMAIL "----------------------"
+#define USER_PASSWORD "--------------"
+
+// Insert RTDB URLefine the RTDB URL
+#define DATABASE_URL "-----------------------------------------"
 
 #define RX 0   // - arduino TX(PD2)  ->  esp-01 RX (GPIO0)
 #define TX 2    //  - arduino RX(PD3)  ->  esp-01 TX (GPIO2)
